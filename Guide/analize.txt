@@ -1,0 +1,451 @@
+`App.cpp` および `App.h` のコードを拝見しました。Direct2Dとの共存を含め、非常に高度な初期化処理が正しく実装されています。
+
+しかし、Direct3Dで「何も表示されない（または画面がクリアカラーのまま）」という問題の**決定的な原因になりうる箇所**がいくつか見つかりました。
+
+---
+
+### 1. `Draw` 関数の実行順序と D2D の干渉
+
+現在の `Draw()` 関数の構造に落とし穴があります。
+
+```cpp
+void App::Draw() {
+    // 1. D3D描画開始
+    if (m_sceneContext.renderer) m_sceneContext.renderer->Begin(clearColor);
+    if (m_pSceneManager) m_pSceneManager->Draw(m_sceneContext);
+    if (m_sceneContext.renderer) m_sceneContext.renderer->End();
+
+    // 2. D2D描画開始
+    m_pD2DTarget->BeginDraw();
+    if (m_pSceneManager) m_pSceneManager->Draw2D(m_sceneContext);
+    m_pD2DTarget->EndDraw(); // ← ここが怪しい
+
+    m_pSwapChain->Present(1, 0);
+}
+
+```
+
+**解析:**
+`ID2D1DeviceContext::EndDraw()` は、内部的に **Direct3D のステート（レンダーターゲットやブレンド状態など）を書き換えます。**
+特に Direct2D は独自の `OMSetRenderTargets` を発行するため、次のフレームの `Begin()` で **「RenderTargetView が外れたまま」** になっている可能性があります。
+
+> **対策:** フレームの最初（`Begin`の前）に、明示的に `m_pImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());` を呼ぶか、Rendererクラスの `Begin` 内で必ずこれを実行しているか確認してください。
+
+---
+
+### 2. 深度バッファ（DepthStencilView）の初期化タイミング
+
+`Init` 内のこの部分に注目してください。
+
+```cpp
+m_pImmediateContext->OMSetRenderTargets(1, &rtv, dsv); // A: ここでセット
+
+// ...中略...
+
+m_sceneContext.renderer = std::make_shared<Renderer>(...);
+m_sceneContext.renderer->Initialize(); 
+m_sceneContext.renderer->SetRenderTargets(m_pRenderTargetView.Get(), m_pDepthStencilView.Get()); // B: Rendererにもセット
+
+```
+
+もし `Renderer::Initialize()` の中で `OMSetRenderTargets` を呼び出していない場合、`App::Init` の最後の方で Direct2D の初期化（`InitDirect2D`）が走った際に、**D3D側のレンダーターゲット設定が D2D 用のビットマップに上書きされ、3D描画コマンドが迷子になっている**可能性があります。
+
+---
+
+### 3. カメラの初期位置（一番ありがちなミス）
+
+カメラの設定を確認しました。
+
+```cpp
+m_mainCamera.transform.position = { 0.0f, 0.0f, -3.0f }; // Z = -3
+m_mainCamera.nearZ = 0.1f;
+m_mainCamera.farZ = 1000.0f;
+
+```
+
+**解析:**
+DirectX の標準（左手座標系）では、**Z の正の方向が画面の奥**です。
+
+* カメラが `Z = -3` にあり、奥（プラス方向）を向いている場合、モデルが `Z = 0` にあれば見えます。
+* しかし、もし `Renderer` や `Camera` クラス内で **「ビュー行列の計算（LookAt）」** が逆になっていたり、モデル自体も `Z = -3` より手前に配置されていると、**Nearクリップ（0.1f）によって消えてしまいます。**
+
+> **確認:** `OpenningScene` で配置しているモデルの座標は何になっていますか？一度、カメラを `{ 0, 0, -10 }` くらいまで引いてみてください。
+
+---
+
+### 4. `Renderer::Begin/End` の中身（定数バッファ）
+
+ここが最も重要です。
+シェーダーには `cbuffer PerFrameCB` があり、`view` や `projection` 行列が必要です。
+
+```cpp
+// App.cpp の Draw内
+m_sceneContext.renderer->Begin(clearColor);
+
+```
+
+この `Begin` の中で、**`m_mainCamera` から行列を取り出し、`UpdateSubresource` で GPU に転送し、`VSSetConstantBuffers` でスロット 1 にセット**していますか？
+これが行われていないと、頂点シェーダーの `mul(viewPos, projection)` がすべて 0 になり、頂点が原点に潰れて何も見えなくなります。
+
+---
+
+### 次に解析したいコード
+
+「なぜ表示されないか」を確定させるために、以下のいずれかを見せていただけますか？
+
+1. **`Renderer.cpp` の `Begin` と `SetCamera` の実装**
+（定数バッファへの転送が正しいか確認したいです）
+2. **`OpenningScene.cpp` の `Draw` または `Update**`
+（何を描画しようとしているか、モデルの座標はどこかを確認したいです）
+3. **`Camera.cpp` の `GetViewMatrix` などの計算部分**
+（座標系が合っているか確認したいです）
+
+特に **`Renderer.cpp`** が Direct3D 描画の心臓部ですので、
+まずはそこから拝見できると助かります！
+
+
+________________________________
+
+
+`Renderer.cpp` のコードを詳細に解析しました。非常にきれいに構造化されており、スキニングやマテリアルの定数バッファ管理も適切です。
+
+しかし、**「何も表示されない」原因と思われるクリティカルな箇所**が 2 つ、そしてマゼンタ色以前に描画が崩れる可能性のある箇所が 1 つ見つかりました。
+
+---
+
+### 1. 定数バッファのサイズ不一致（最優先）
+
+HLSL側とC++側で、ボーン行列の配列数が異なっています。
+
+* **HLSL:** `float4x4 boneMatrices[100];`
+* **C++:** `static const int MAX_BONES = 128;` / `DirectX::XMMATRIX bones[MAX_BONES];`
+
+**何が起きるか：**
+Direct3D 11の定数バッファは、**HLSL側で定義されたサイズ以上のデータがC++側から送られると、バインド時にエラー（または無視）される**ことがあります。
+また、`BoneCB` のサイズがHLSL側の想定（100行列分）を超えているため、その後の定数バッファスロットのオフセットがズレる原因になります。
+
+> **修正：** 両方を `128` (または `100`) に統一してください。
+
+---
+
+### 2. Viewport（ビューポート）のハードコーディング
+
+`Renderer::Begin` 内で以下のように記述されています。
+
+```cpp
+vp.Width = 1280.0f;
+vp.Height = 720.0f;
+
+```
+
+**解析：**
+`App::Init` で作成したウィンドウのサイズがこれと異なる場合、描画範囲が画面外に飛ばされたり、極端に小さく表示されたりします。
+
+> **修正：** ウィンドウ作成時の `width`, `height` を保持しておき、それをセットするようにしてください。
+
+---
+
+### 3. 座標変換の順序（数学的ミス）
+
+`TraverseNode` 内の行列計算に注目してください。
+
+```cpp
+XMMATRIX world = local * parentMatrix;
+
+```
+
+**解析：**
+`DirectXMath` （左手座標系）では、親の変換を適用する場合、**`local * parentMatrix`** で正解です。
+しかし、`DrawModel` で呼んでいる `XMMATRIX world = transform.GetMatrix();` の `transform` 側でどう計算されているかが重要です。
+
+もしモデルが「原点」に表示されない場合、**カメラが `Z = -3` にいて、モデルも `Z = 0` 付近にあるのに見えない**なら、一度 `XMMatrixTranspose` を疑うよりも先に、**「モデルがカメラの背後にいないか」**を確認してください。
+
+---
+
+### 4. マテリアル定数バッファのスロット不一致
+
+HLSL側を確認すると、マテリアルはスロット `b3` です。
+
+```hlsl
+// HLSL
+cbuffer MaterialCB : register(b3)
+
+```
+
+C++側では正しく `3` にセットされていますが、**ピクセルシェーダー（PS）にしかセットされていません。**
+
+```cpp
+// C++
+context_->PSSetConstantBuffers(3, 1, &mcb);
+
+```
+
+これは現在の `PSMain` がマゼンタ固定なら問題ありませんが、将来的に頂点シェーダー（VS）でマテリアル色を使いたい場合は `VSSetConstantBuffers` も必要になります。
+
+---
+
+### 💡 解決のための「次の一手」
+
+表示されない問題を切り分けるために、**`OpenningScene.cpp`** で以下の実験をしてみてください。
+
+1. **カメラを遠ざける:** `m_mainCamera.transform.position = { 0.0f, 0.0f, -10.0f };` にしてみる。
+2. **カリングをオフにする:** `App.cpp` で `rsDesc.CullMode = D3D11_CULL_NONE;` に変えてみる（ポリゴンの裏表が逆で消えている可能性を排除）。
+3. **モデルのスケール:** 読み込んだモデルが巨大すぎて、カメラが「モデルの内側」に埋まっていることがあります。`transform.scale = { 0.01f, 0.01f, 0.01f };` など極端に小さくしてみてください。
+
+次は **`OpenningScene.cpp`** か、モデルを読み込んでいる **`GltfLoader.cpp`** を見せていただけますか？
+「ボーン行列の初期値」が不正（すべて0など）だと、頂点がすべて原点に潰れて何も映らなくなります。
+そこをチェックしたいです。
+
+修正を後にするのは賢明な判断です！まずは「表示されない」という最大の謎を解くことに集中しましょう。
+
+`GltfLoader.cpp` を見せていただき、**極めて重要な「表示されない原因」の候補**が新たに見つかりました。特に Assimp を使った座標変換と、ボーンの処理に注目です。
+
+---
+
+### 1. 行列の転置（Transpose）の重複
+
+ここが一番怪しいポイントです。`GltfLoader` 内で以下のようになっています。
+
+```cpp
+// GltfLoader.cpp
+XMMATRIX m = XMMatrixTranspose(XMLoadFloat4x4((XMFLOAT4X4*)&ainode->mTransformation));
+node->localTransform = m;
+
+```
+
+**解析:**
+Assimp の行列は「行優先（Row Major）」ですが、`XMLoadFloat4x4` で読み込む際にすでに適切な形式になります。
+さらに、`Renderer::DrawMesh` 内で `XMMatrixTranspose(world)` を実行していますよね。
+
+* **Loader:** 転置（ここで数学的に逆転）
+* **Renderer:** 転置（ここでもう一度逆転）
+
+結果として、**「転置のしすぎ」でモデルがバラバラになっているか、カメラの遥か彼方に飛んでいっている**可能性があります。
+
+> **切り分け:** 一度 Loader 側の `XMMatrixTranspose` を外してみる価値があります。
+
+---
+
+### 2. ノードの再帰計算の罠
+
+`Renderer::TraverseNode` での計算：
+
+```cpp
+XMMATRIX local = node->localTransform;
+XMMATRIX world = local * parentMatrix;
+
+```
+
+もし `node->localTransform` がすでに「親からの相対」ではなく「ルートからの絶対座標」として Loader で計算されていた場合、この再帰計算によって**座標が二重に掛け算され、巨大化して消滅**します。
+Assimp の `mTransformation` は通常「親ノードからの相対」なので計算式は合っていますが、上記 1 の「転置」が混ざると軸が歪みます。
+
+---
+
+### 3. スキニングモデルの「ボーン行列初期値」
+
+これが「真っ暗」の正体である可能性が高いです。
+
+```cpp
+// GltfLoader.cpp
+if (hasBones) {
+    model = std::make_shared<SkinnedModel>();
+    // ...
+    ProcessAnimations(scene, (SkinnedModel*)model.get());
+}
+
+```
+
+**解析:**
+`SkinnedModel` の `finalMatrices`（最終的なボーン行列の配列）は、**初期化直後はどうなっていますか？**
+もし `finalMatrices` が空だったり、すべて 0 行列（全要素 0）で初期化されている場合、頂点シェーダー内の以下の処理で**頂点がすべて原点 (0,0,0) に吸い込まれます。**
+
+```hlsl
+// base.hlsl
+skinnedPos += mul(localPos, boneMatrices[index]) * weight; // 0行列を掛けると 0 になる
+
+```
+
+> **確認:** アニメーションを再生（更新）する前の「初期ポーズ（バインドポーズ）」の行列が `finalMatrices` に入っているか確認してください。
+
+---
+
+### 4. 頂点構造体の不一致
+
+`ProcessMesh` で頂点データを詰めていますが：
+
+```cpp
+v.position = { aimesh->mVertices[i].x, aimesh->mVertices[i].y, aimesh->mVertices[i].z };
+
+```
+
+この `v`（`Vertex` 構造体）の定義は、HLSL側の `VS_INPUT` と完全に並び順が一致していますか？
+特に **`BLENDINDICES` (uint4)** と **`BLENDWEIGHT` (float4)** が構造体のどの位置にあるか、そして `ProcessMesh` 内でこれらが `0` に初期化されているかが重要です。
+
+---
+
+### 🔍 今すぐ試せる「表示確認」デバッグ
+
+もし可能であれば、`OpenningScene` の `Draw` 関数内で、**モデルを描画する直前**に以下の 1 行を追加してみてください。
+
+```cpp
+// 座標軸を表示する代わりに、モデルを強制的にカメラの前に置くテスト
+Transform debugTransform;
+debugTransform.position = { 0, 0, 0 }; 
+debugTransform.scale = { 1, 1, 1 };
+renderer->DrawModel(*m_model, debugTransform);
+
+```
+
+これで何も映らない場合、やはり**「Loaderでの行列計算」**か**「定数バッファの転送」**のどちらかが死んでいます。
+
+次は、**`Mesh.cpp` の `CreateBuffers**` か、
+**`Vertex` 構造体の定義**を見せていただけますか？
+GPUにデータがどう送られているかの最後のパズルを解きましょう！
+
+________________________________________
+
+`Mesh.cpp` と `Vertex.h` のコードを確認しました。
+バッファ作成処理自体は完璧です。`Vertex` 構造体の型も、HLSL側の `uint4` と `float4` に対応するよう適切に定義されています。
+
+しかし、ここまでの全コードを統合して解析した結果、**「表示されない」原因の正体**がほぼ絞り込めました。
+
+---
+
+### 1. 【最有力候補】Input Layout（入力レイアウト）の定義ミス
+
+実は、今回送っていただいたコードの中に **`ID3D11InputLayout`** の作成部分が含まれていませんでした（通常 `Shader` クラスか `Renderer::Initialize` で作成します）。
+
+もし、入力レイアウトの定義で `boneIndices` を **`DXGI_FORMAT_R32G32B32A32_FLOAT`** （浮動小数点）として定義してしまっていると、C++側の `uint32_t` と型が衝突し、頂点データが壊れてしまいます。
+
+> **チェックポイント:** `D3D11_INPUT_ELEMENT_DESC` の `BLENDINDICES` のフォーマットは **`DXGI_FORMAT_R32G32B32A32_UINT`** になっていますか？
+
+---
+
+### 2. 【スキニングの罠】ボーンウェイトが「0」
+
+`GltfLoader.cpp` の `ProcessMesh` を見返すと、頂点を生成した直後に `AddBoneWeight` を呼ぶ前の段階で、**`boneWeights` が 0 に初期化されていない** 可能性があります。
+
+```cpp
+// GltfLoader.cpp
+for (unsigned i = 0; i < aimesh->mNumVertices; i++) {
+    auto& v = mesh.vertices[i];
+    v.position = ...; // positionとnormalとuvしか入れていない！
+}
+
+```
+
+**解析:**
+C++の構造体は、明示的に初期化しないと中身に「ゴミデータ」が入ります。もし `boneWeights` に適当な値が入っていて、その合計が `0` でない場合、頂点シェーダーの以下のロジックが無視されます。
+
+```hlsl
+// HLSL
+if (sumW == 0.0f) {
+    skinnedPos = localPos; // ここを通ってほしい
+}
+
+```
+
+結果として、ゴミのようなボーン行列（`boneMatrices[ランダムなインデックス]`）が適用され、頂点が宇宙の彼方へ飛んでいってしまいます。
+
+---
+
+### 3. 【描画の順序】D2D と D3D のコンテキスト競合
+
+`App::Draw()` の中で、D3Dの描画が終わった直後に `m_pD2DTarget->EndDraw()` を呼んでいますね。
+Direct2D の `EndDraw` は、呼び出し時に **「すべての描画コマンドをバッチ処理して実行」** します。このとき、内部的に Direct3D のステート（ラスタライザ、深度ステンシルなど）を D2D 用の設定に書き換えてしまいます。
+
+次に `App::Draw()` が呼ばれたとき、`Renderer::Begin` 内で **`RSSetState`（ラスタライザの設定）** や **`IASetInputLayout`** をやり直していない場合、前回の D2D の設定が残っていて 3D モデルが描画されないことがあります。
+
+---
+
+### 💡 解決のための「次の一歩」
+
+まずは、一番簡単な **「初期化漏れ」** から潰しましょう。`Vertex.h` を以下のように書き換えてみてください。
+
+```cpp
+// Vertex.h
+struct Vertex {
+    XMFLOAT3 position;
+    XMFLOAT3 normal;
+    XMFLOAT2 uv;
+
+    // {} を付けて 0 で初期化されるようにする
+    uint32_t boneIndices[4]{ 0, 0, 0, 0 };
+    float boneWeights[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+};
+
+```
+
+これで「スキニングされていないモデル」が映るようになれば、原因はウェイトのゴミデータです。
+
+### 次に見るべきコードは？
+
+もしこれでも直らない場合、**`Shader.cpp` 内の `CreateInputLayout`（
+またはそれに相当する場所）** を見せてください。ここが D3D11 における
+「頂点データとシェーダーの結びつき」を定義する最重要地点です！
+
+次はそこを確認してもよろしいでしょうか？
+
+___________________________________________
+
+`Shader.cpp` のコードを拝見しました。ついに、**「表示されない」最大の謎を解く鍵（ミスマッチ）**が見つかりました！
+
+これまでの HLSL コードと、この `CreateInputLayout` を照らし合わせると、頂点データがシェーダーに正しく伝わっていない箇所が明確にあります。
+
+---
+
+### 1. セマンティック名の不一致（これが致命的です）
+
+HLSL側とC++側の「名前」が一致していないため、頂点シェーダーにデータが届いていません。
+
+| 項目 | HLSL (base.hlsl) | C++ (Shader.cpp) | 状態 |
+| --- | --- | --- | --- |
+| **UV座標** | `TEXCOORD0` | `"TEXCOORD"` | **NG** |
+
+**解説:**
+HLSLで `uv : TEXCOORD0` と書いている場合、C++側も `"TEXCOORD"` ではなく、正確に **`"TEXCOORD"` 且つ SemanticIndex を `0**` にするか、文字列自体を `"TEXCOORD0"` に合わせる必要があります（通常はセマンティック名 `"TEXCOORD"`、インデックス `0` で対応させます）。
+
+---
+
+### 2. インプットレイアウトと構造体のズレ
+
+レイアウトの定義に `offsetof` と `D3D11_APPEND_ALIGNED_ELEMENT` が混在しています。
+
+```cpp
+{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, uv), ... },
+{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, ... },
+
+```
+
+**解説:**
+`Vertex` 構造体では `uv` の次に `boneIndices` があります。
+`D3D11_APPEND_ALIGNED_ELEMENT` を使うのは便利ですが、もし C++ 側の構造体でコンパイラがパディング（隙間）を入れていると、GPU側が「どこからがボーン番号か」を勘違いします。
+
+> **推奨:** すべて `offsetof(Vertex, メンバ名)` に統一したほうが安全です。
+
+---
+
+### 3. 【重要】ボーン情報のデフォルト値
+
+`Shader.cpp` 内で `BLENDINDICES` と `BLENDWEIGHT` を追加されていますが、もし**「アニメーションがないモデル」**を描画する場合でも、このレイアウトは「頂点バッファにそれらのデータが含まれていること」を期待します。
+
+前回の `GltfLoader::ProcessMesh` では `position`, `normal`, `uv` しか値を入れていなかったため、**`boneWeights` にメモリ上のゴミ（適当な数値）が入っていると、頂点シェーダーが「これはスキニングが必要なモデルだ」と誤認し、デタラメな行列を掛けて頂点を画面外に飛ばしてしまいます。**
+
+---
+
+### 解析まとめ：なぜ映らないのか？
+
+1. **UV・座標の不一致:** セマンティック名が微妙に違うため、シェーダーが「入力データなし」と判断して 0 を入れている可能性がある。
+2. **ボーンウェイトのゴミ:** 静的なモデル（背景など）を描画しようとしても、初期化されていないウェイト値のせいで、頂点が原点や無限遠に潰れている。
+3. **転置のしすぎ:** （前述した通り）Loader と Renderer の両方で `Transpose` をしているため、行列が「行優先・列優先」の迷宮に入っている。
+
+### 次のステップへの提案
+
+修正は後でまとめて行うとのことですので
+、次は最後のパズル **「`OpenningScene.cpp`」** を見せていただけますか？
+
+* 実際にどのファイルを読み込んでいるのか
+* `Update` で行列をどう動かしているのか
+
+これを見れば、コード全体の流れがすべて繋がります！準備ができたら送ってください。
+
