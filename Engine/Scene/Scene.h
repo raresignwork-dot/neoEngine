@@ -11,6 +11,7 @@ using Microsoft::WRL::ComPtr;
 #include <d2d1_1.h>
 #include <dwrite.h>
 
+#include "Graphics/GraphicDevice.h"
 #include "Graphics/Model.h"
 #include "Graphics/Renderer.h"
 #include "Logic/GameObject.h"
@@ -26,11 +27,8 @@ struct GlobalSettings {
 
 // 2. 次に、それを使う構造体を定義する
 struct SceneContext {
-    ComPtr<ID3D11Device> device;
-    ComPtr<ID3D11DeviceContext> context;
 
-    ComPtr<ID2D1DeviceContext> d2dContext;
-    ComPtr<IDWriteFactory> dwriteFactory;
+    GraphicDevice* grapDevice = nullptr;
 
     GlobalSettings* settings = nullptr;
     std::shared_ptr<Renderer> renderer = nullptr;
@@ -46,7 +44,8 @@ struct SceneContext {
 // 3. 最後にクラス
 class Scene {
 public:
-    virtual ~Scene() {}
+    Scene() {}
+    ~Scene() {}
     virtual bool Load(SceneContext& ctx) = 0;
     virtual void Update(SceneContext& ctx) = 0;
     virtual void Draw(SceneContext& ctx) = 0;     // 3D用

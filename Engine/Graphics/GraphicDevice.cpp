@@ -10,7 +10,7 @@ GraphicDevice::~GraphicDevice()
 {
 }
 
-bool GraphicDevice::Init(HINSTANCE hInstance, int width, int height , HWND m_hWnd)
+bool GraphicDevice::Init(HINSTANCE hInstance, int width, int height , HWND hWnd)
 {
 
     // =========================
@@ -27,7 +27,7 @@ bool GraphicDevice::Init(HINSTANCE hInstance, int width, int height , HWND m_hWn
     sd.BufferDesc.Height = height;
     sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // D2D共有必須
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.OutputWindow = m_hWnd;
+    sd.OutputWindow = hWnd;
     sd.SampleDesc.Count = 1;
     sd.Windowed = TRUE;
 

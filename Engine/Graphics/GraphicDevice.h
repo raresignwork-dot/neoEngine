@@ -24,8 +24,9 @@ public:
     GraphicDevice();
     ~GraphicDevice();
 
-    bool Init(HINSTANCE hInstance, int width, int height , HWND m_hWnd);
+    bool Init(HINSTANCE hInstance, int width, int height , HWND hWnd);
     bool InitDirect2D();
+
 
 
     ComPtr<ID3D11Device> m_pDevice;

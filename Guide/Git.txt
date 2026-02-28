@@ -72,6 +72,8 @@ git commit -m "変更内容の説明"
 ```
 
 ---
+コミットログ
+git log --oneline --graph
 
 # 5️⃣ 履歴を見る
 
@@ -843,3 +845,1304 @@ Gitは「設計思考の可視化ツール」です。
 まで踏み込みますか？
 
 あなたは今「道具の使い方」から「設計管理」に進み始めています。
+
+結論から言うと **可能です。**
+Gitでは **「ブランチ全体」ではなく「特定ファイルだけ」を別ブランチから取り込む**ことができます。実務でもよく使われる方法です。
+
+---
+
+# 1. 一番シンプルな方法（よく使う）
+
+特定ファイルだけ別ブランチから取得します。
+
+```bash
+git checkout <ブランチ名> -- <ファイルパス>
+```
+
+例
+
+```bash
+git checkout GraphicDevice -- Engine/Graphics/GraphicDevice.cpp
+```
+
+意味
+
+```
+GraphicDevice ブランチの
+GraphicDevice.cpp を
+現在のブランチにコピーする
+```
+
+その後
+
+```bash
+git add Engine/Graphics/GraphicDevice.cpp
+git commit -m "Import GraphicDevice.cpp from GraphicDevice branch"
+```
+
+---
+
+# 2. 新しいGitの書き方（推奨）
+
+最近はこちらが推奨です。
+
+```bash
+git restore --source <branch> <file>
+```
+
+例
+
+```bash
+git restore --source GraphicDevice Engine/Graphics/GraphicDevice.cpp
+```
+
+意味
+
+```
+GraphicDevice ブランチの
+そのファイルを
+今のブランチに復元
+```
+
+---
+
+# 3. 複数ファイルも可能
+
+```bash
+git restore --source GraphicDevice Engine/Graphics/
+```
+
+または
+
+```bash
+git checkout GraphicDevice -- Engine/Graphics/
+```
+
+フォルダ単位でも可能です。
+
+---
+
+# 4. 実際のエンジン開発でよくある使い方
+
+例えばあなたの構成：
+
+```
+master
+ ├ Window
+ ├ GraphicDevice
+ └ feature_x
+```
+
+例えば
+
+```
+Window ブランチ
+に
+GraphicDevice.cpp
+だけ持ってきたい
+```
+
+なら
+
+```bash
+git switch Window
+git restore --source GraphicDevice Engine/Graphics/GraphicDevice.cpp
+git commit -m "Import GraphicDevice implementation"
+```
+
+---
+
+# 5. 内部的に何が起きているか
+
+Gitは実は
+
+```
+branch = commit pointer
+```
+
+なので
+
+```
+ブランチAの
+ファイルA
+```
+
+を
+
+```
+ブランチB
+```
+
+にコピーしているだけです。
+
+---
+
+# 6. mergeとの違い
+
+| 方法                 | 内容         |
+| ------------------ | ---------- |
+| merge              | ブランチ全部     |
+| rebase             | 履歴移動       |
+| cherry-pick        | コミット単位     |
+| restore / checkout | **ファイル単位** |
+
+---
+
+# 7. さらに強い技（プロが使う）
+
+**特定コミットのファイルだけ**
+
+```bash
+git checkout <commit> -- file
+```
+
+例
+
+```bash
+git checkout 9cb28a7 -- Engine/Graphics/GraphicDevice.cpp
+```
+
+---
+
+# まとめ
+
+あなたの質問
+
+> 特定のファイルだけマージできる？
+
+答え
+
+```
+できる
+```
+
+使うコマンド
+
+```bash
+git restore --source <branch> <file>
+```
+
+---
+
+もしよければですが
+あなたの **現在のエンジン開発のGit構造**を見ると、かなり良い勉強フェーズに入っています。
+
+次を解説できます：
+
+**① エンジン開発でのGitブランチ戦略（超重要）**
+**② VisualStudio + Git の安全運用**
+**③ 「コード消えた事件」を100%防ぐ方法**
+
+この3つはかなり実用的です。
+
+
+ゲームエンジンや基盤ライブラリの開発では、**ブランチ戦略を最初に決めておかないと後で必ず破綻します**。
+特に **C++エンジン開発（長期プロジェクト）**では「壊れないメインライン」を維持する設計が重要です。
+
+ここでは **小規模〜中規模エンジン開発で最も実用的なGitブランチ戦略**を整理します。
+
+---
+
+# エンジン開発向け Gitブランチ戦略（実践版）
+
+## 1. 基本構造
+
+基本は **4種類のブランチ**を使います。
+
+```
+master (安定版)
+develop (開発統合)
+feature/*
+hotfix/*
+```
+
+構造
+
+```
+master
+   ↑
+develop
+   ↑
+feature/*
+```
+
+---
+
+# 2. 各ブランチの役割
+
+## master（リリース・完全安定）
+
+```
+master
+```
+
+用途
+
+* **常にビルド可能**
+* **安定状態のみ**
+* バージョンタグ付け
+
+例
+
+```
+v0.1 Engine起動
+v0.2 Windowシステム
+v0.3 DirectX初期化
+```
+
+ここは **壊れたコードを絶対入れない**。
+
+---
+
+## develop（開発統合）
+
+```
+develop
+```
+
+用途
+
+* 機能開発の統合場所
+* 日常開発のベース
+
+流れ
+
+```
+feature → develop → master
+```
+
+---
+
+## feature（機能開発）
+
+```
+feature/*
+```
+
+例
+
+```
+feature/GraphicDevice
+feature/Window
+feature/Input
+feature/SceneSystem
+```
+
+用途
+
+* 新機能
+* リファクタ
+* 実験
+
+---
+
+## hotfix（緊急修正）
+
+```
+hotfix/*
+```
+
+例
+
+```
+hotfix/crash_fix
+hotfix/memory_leak
+```
+
+用途
+
+* masterの緊急バグ修正
+
+---
+
+# 3. 実際の開発フロー
+
+## ① developから機能ブランチ作成
+
+```
+git checkout develop
+git checkout -b feature/GraphicDevice
+```
+
+---
+
+## ② 作業
+
+```
+git add .
+git commit -m "GraphicDevice 初期化実装"
+```
+
+---
+
+## ③ developにマージ
+
+```
+git checkout develop
+git merge feature/GraphicDevice
+```
+
+---
+
+## ④ feature削除
+
+```
+git branch -d feature/GraphicDevice
+```
+
+---
+
+## ⑤ 安定したら master
+
+```
+git checkout master
+git merge develop
+```
+
+---
+
+# 4. 図で理解
+
+```
+master
+  │
+  │
+  └── develop
+        │
+        ├─ feature/GraphicDevice
+        │
+        ├─ feature/Window
+        │
+        └─ feature/Input
+```
+
+開発
+
+```
+feature → develop → master
+```
+
+---
+
+# 5. エンジン開発でおすすめの命名
+
+エンジンは機能が多いので分類します。
+
+### core
+
+```
+feature/core
+```
+
+### graphics
+
+```
+feature/graphics
+```
+
+### scene
+
+```
+feature/scene
+```
+
+### platform
+
+```
+feature/platform/windows
+```
+
+---
+
+例
+
+```
+feature/graphics-device
+feature/window-system
+feature/scene-manager
+feature/input-system
+```
+
+---
+
+# 6. ファイル単位マージ（あなたの質問）
+
+これは可能です。
+
+例
+
+```
+feature_A
+feature_B
+```
+
+Bのファイルだけ取りたい
+
+```
+git checkout feature_B -- GraphicDevice.cpp
+```
+
+これで
+
+```
+feature_B の GraphicDevice.cpp
+```
+
+だけ取得できます。
+
+---
+
+# 7. エンジン開発で一番重要なルール
+
+これが **最重要です**
+
+### masterには直接コミットしない
+
+必ず
+
+```
+feature → develop → master
+```
+
+---
+
+# 8. 小規模個人開発の場合（おすすめ）
+
+あなたの現在の状況なら
+
+```
+master
+feature/*
+```
+
+の **2ブランチでも十分**です。
+
+構造
+
+```
+master
+ ├ feature/GraphicDevice
+ ├ feature/Window
+ └ feature/Scene
+```
+
+---
+
+# 9. あなたの現在のGit状態
+
+さっきのログ
+
+```
+feature_x
+Window
+GraphicDevice
+master
+```
+
+実は
+
+**ブランチ整理した方がいい状態です**
+
+理想
+
+```
+master
+develop
+feature/graphic-device
+feature/window
+```
+
+---
+
+# 10. エンジン開発者のGit運用ルール
+
+これはプロでも守るルールです
+
+### ① 1機能 = 1ブランチ
+
+NG
+
+```
+feature_all
+```
+
+OK
+
+```
+feature/Window
+feature/GraphicDevice
+```
+
+---
+
+### ② 小さいコミット
+
+NG
+
+```
+fix
+update
+```
+
+OK
+
+```
+Window クラス作成
+DirectX初期化実装
+SwapChain作成
+```
+
+---
+
+### ③ ビルドできる状態でcommit
+
+---
+
+### ④ 大きい修正は別ブランチ
+
+今回の
+
+```
+GraphicDevice修正
+```
+
+は
+
+```
+feature/graphics-refactor
+```
+
+が理想です。
+
+---
+
+# 11. エンジン開発者がよく使う追加ブランチ
+
+将来おすすめ
+
+```
+experiment/*
+```
+
+例
+
+```
+experiment/vulkan
+experiment/multithread-render
+```
+
+実験用です。
+
+---
+
+# もし良ければ次にこれも解説できます
+
+あなたの今の質問内容からして、ここが次の重要ポイントです。
+
+### ② **エンジン開発でのGit安全運用（事故防止）**
+
+具体的に
+
+* Gitで **プロジェクトを壊さない方法**
+* **絶対やってはいけない操作**
+* **Git restore / reset / revert の違い**
+* **履歴を壊さない運用**
+
+これは **エンジン開発では超重要**です。
+（これ知らないと一度はプロジェクト消えます）
+Gitを理解する上で **「ステージ（stage）」と「stash」**はかなり重要です。
+これは **Gitの内部の作業領域の仕組み**に関係しています。
+
+まず、Gitには **3つの作業エリア**があります。
+
+---
+
+# Gitの3つの作業エリア
+
+```text
+作業ディレクトリ (Working Directory)
+        ↓ git add
+ステージ (Staging Area / Index)
+        ↓ git commit
+リポジトリ (Repository)
+```
+
+### ① Working Directory（作業ディレクトリ）
+
+あなたが普段編集しているファイルです。
+
+例
+
+```
+GraphicDevice.cpp を編集
+```
+
+この状態は **Gitの履歴にはまだ入っていません。**
+
+---
+
+### ② Staging Area（ステージ）
+
+**「次のcommitに含めるファイルを選ぶ場所」**です。
+
+コマンド
+
+```bash
+git add GraphicDevice.cpp
+```
+
+これをすると
+
+```
+Working Directory
+    ↓
+Staging Area
+```
+
+に移動します。
+
+つまり
+
+**「この変更をcommitする予定です」**
+
+という予約状態になります。
+
+---
+
+### ③ Repository（履歴）
+
+ここで初めて履歴になります。
+
+```bash
+git commit -m "GraphicDevice追加"
+```
+
+すると
+
+```
+Working Directory
+      ↓
+Staging
+      ↓
+Repository（履歴）
+```
+
+になります。
+
+---
+
+# 具体例
+
+ファイル3つ修正したとします
+
+```
+GraphicDevice.cpp
+Window.cpp
+Scene.cpp
+```
+
+しかし commit には **1つだけ入れたい**
+
+```
+git add GraphicDevice.cpp
+git commit -m "GraphicDevice追加"
+```
+
+結果
+
+```
+commit
+└ GraphicDevice.cpp
+```
+
+他のファイルはまだ作業状態です。
+
+これが **ステージの意味**です。
+
+---
+
+# 図で理解
+
+```
+修正
+↓
+Working Directory
+
+git add
+↓
+Staging Area
+
+git commit
+↓
+Repository
+```
+
+---
+
+# stash（スタッシュ）
+
+stashは
+
+**作業途中の変更を一時保存する機能**
+
+です。
+
+意味は英語の
+
+```
+stash = 隠す / しまう
+```
+
+---
+
+# 使う場面
+
+作業中
+
+```
+GraphicDevice.cpp 編集中
+```
+
+しかし
+
+```
+別ブランチに移動したい
+```
+
+でもGitは怒ります。
+
+```
+error: changes would be overwritten
+```
+
+---
+
+# ここで stash
+
+```bash
+git stash
+```
+
+すると
+
+```
+作業内容
+↓
+stashに退避
+↓
+Working Directory が空になる
+```
+
+---
+
+# stashの流れ
+
+### 退避
+
+```bash
+git stash
+```
+
+作業が隠される。
+
+---
+
+### ブランチ変更
+
+```bash
+git checkout master
+```
+
+---
+
+### 作業復帰
+
+```bash
+git stash pop
+```
+
+すると
+
+```
+隠していた変更が戻る
+```
+
+---
+
+# stashの構造
+
+Git内部では
+
+```
+stash stack
+```
+
+という形です。
+
+```
+stash@{0}
+stash@{1}
+stash@{2}
+```
+
+---
+
+確認
+
+```bash
+git stash list
+```
+
+---
+
+# stash図
+
+```
+Working Directory
+    ↓
+git stash
+    ↓
+stash storage
+```
+
+戻す
+
+```
+git stash pop
+```
+
+---
+
+# 開発でよくあるstashの使い方
+
+例
+
+```
+Window実装中
+```
+
+途中で
+
+```
+バグ修正必要
+```
+
+そこで
+
+```
+git stash
+git checkout hotfix
+```
+
+修正後
+
+```
+git checkout feature/window
+git stash pop
+```
+
+---
+
+# まとめ
+
+### ステージ
+
+```
+commitする予定のファイルを置く場所
+```
+
+操作
+
+```
+git add
+```
+
+---
+
+### stash
+
+```
+作業途中の変更を一時保存
+```
+
+操作
+
+```
+git stash
+git stash pop
+```
+
+---
+
+# 最後に（かなり重要）
+
+Git初心者が **一番理解すると強くなる概念**はこれです。
+
+```
+Working Directory
+Staging Area
+Repository
+```
+
+この3つを理解すると
+Gitの **90%が理解できます。**
+
+---
+
+もしよければですが、
+あなたのログを見る限り **次に理解するとGit事故が激減する知識**があります。
+
+**「git reset / revert / restore の完全な違い」**
+
+これはGitで一番混乱する部分なので、
+エンジン開発者向けに **図付きで解説できます。**
+_________________________________
+
+
+Gitを理解する上で **「ステージ（stage）」と「stash」**はかなり重要です。
+これは **Gitの内部の作業領域の仕組み**に関係しています。
+
+まず、Gitには **3つの作業エリア**があります。
+
+---
+
+# Gitの3つの作業エリア
+
+```text
+作業ディレクトリ (Working Directory)
+        ↓ git add
+ステージ (Staging Area / Index)
+        ↓ git commit
+リポジトリ (Repository)
+```
+
+### ① Working Directory（作業ディレクトリ）
+
+あなたが普段編集しているファイルです。
+
+例
+
+```
+GraphicDevice.cpp を編集
+```
+
+この状態は **Gitの履歴にはまだ入っていません。**
+
+---
+
+### ② Staging Area（ステージ）
+
+**「次のcommitに含めるファイルを選ぶ場所」**です。
+
+コマンド
+
+```bash
+git add GraphicDevice.cpp
+```
+
+これをすると
+
+```
+Working Directory
+    ↓
+Staging Area
+```
+
+に移動します。
+
+つまり
+
+**「この変更をcommitする予定です」**
+
+という予約状態になります。
+
+---
+
+### ③ Repository（履歴）
+
+ここで初めて履歴になります。
+
+```bash
+git commit -m "GraphicDevice追加"
+```
+
+すると
+
+```
+Working Directory
+      ↓
+Staging
+      ↓
+Repository（履歴）
+```
+
+になります。
+
+---
+
+# 具体例
+
+ファイル3つ修正したとします
+
+```
+GraphicDevice.cpp
+Window.cpp
+Scene.cpp
+```
+
+しかし commit には **1つだけ入れたい**
+
+```
+git add GraphicDevice.cpp
+git commit -m "GraphicDevice追加"
+```
+
+結果
+
+```
+commit
+└ GraphicDevice.cpp
+```
+
+他のファイルはまだ作業状態です。
+
+これが **ステージの意味**です。
+
+---
+
+# 図で理解
+
+```
+修正
+↓
+Working Directory
+
+git add
+↓
+Staging Area
+
+git commit
+↓
+Repository
+```
+
+---
+
+# stash（スタッシュ）
+
+stashは
+
+**作業途中の変更を一時保存する機能**
+
+です。
+
+意味は英語の
+
+```
+stash = 隠す / しまう
+```
+
+---
+
+# 使う場面
+
+作業中
+
+```
+GraphicDevice.cpp 編集中
+```
+
+しかし
+
+```
+別ブランチに移動したい
+```
+
+でもGitは怒ります。
+
+```
+error: changes would be overwritten
+```
+
+---
+
+# ここで stash
+
+```bash
+git stash
+```
+
+すると
+
+```
+作業内容
+↓
+stashに退避
+↓
+Working Directory が空になる
+```
+
+---
+
+# stashの流れ
+
+### 退避
+
+```bash
+git stash
+```
+
+作業が隠される。
+
+---
+
+### ブランチ変更
+
+```bash
+git checkout master
+```
+
+---
+
+### 作業復帰
+
+```bash
+git stash pop
+```
+
+すると
+
+```
+隠していた変更が戻る
+```
+
+---
+
+# stashの構造
+
+Git内部では
+
+```
+stash stack
+```
+
+という形です。
+
+```
+stash@{0}
+stash@{1}
+stash@{2}
+```
+
+---
+
+確認
+
+```bash
+git stash list
+```
+
+---
+
+# stash図
+
+```
+Working Directory
+    ↓
+git stash
+    ↓
+stash storage
+```
+
+戻す
+
+```
+git stash pop
+```
+
+---
+
+# 開発でよくあるstashの使い方
+
+例
+
+```
+Window実装中
+```
+
+途中で
+
+```
+バグ修正必要
+```
+
+そこで
+
+```
+git stash
+git checkout hotfix
+```
+
+修正後
+
+```
+git checkout feature/window
+git stash pop
+```
+
+---
+
+# まとめ
+
+### ステージ
+
+```
+commitする予定のファイルを置く場所
+```
+
+操作
+
+```
+git add
+```
+
+---
+
+### stash
+
+```
+作業途中の変更を一時保存
+```
+
+操作
+
+```
+git stash
+git stash pop
+```
+
+---
+
+# 最後に（かなり重要）
+
+Git初心者が **一番理解すると強くなる概念**はこれです。
+
+```
+Working Directory
+Staging Area
+Repository
+```
+
+この3つを理解すると
+Gitの **90%が理解できます。**
+
+---
+
+もしよければですが、
+あなたのログを見る限り **次に理解するとGit事故が激減する知識**があります。
+
+**「git reset / revert / restore の完全な違い」**
+
+これはGitで一番混乱する部分なので、
+エンジン開発者向けに **図付きで解説できます。**
+a

@@ -19,8 +19,8 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-Renderer::Renderer(ID3D11Device* device, ID3D11DeviceContext* context)
-    : device_(device), context_(context)
+Renderer::Renderer(GraphicDevice* device)
+    : device_(device)
 {
 }
 
@@ -29,7 +29,7 @@ void Renderer::Initialize()
 {
     shader3D_ = std::make_unique<Shader>();
     // パスは環境に合わせて調整してください
-    shader3D_->Load(device_.Get(), L"Assets/Shaders/base.hlsl", "VSMain", "PSMain");
+    shader3D_->Load(device_->m_pDevice.Get(), L"Assets/Shaders/base.hlsl", "VSMain", "PSMain");
 
     // --- 定数バッファ作成 (PerObject) ---
     {
@@ -38,7 +38,7 @@ void Renderer::Initialize()
         desc.ByteWidth = sizeof(PerObjectCB);
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        device_->CreateBuffer(&desc, nullptr, perObjectCB_.GetAddressOf());
+        device_->m_pDevice->CreateBuffer(&desc, nullptr, perObjectCB_.GetAddressOf());
     }
 
     // --- 定数バッファ作成 (PerFrame) ---
@@ -48,7 +48,7 @@ void Renderer::Initialize()
         desc.ByteWidth = sizeof(PerFrameCB);
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        device_->CreateBuffer(&desc, nullptr, perFrameCB_.GetAddressOf());
+        device_->m_pDevice->CreateBuffer(&desc, nullptr, perFrameCB_.GetAddressOf());
     }
 
     // --- 定数バッファ作成 (Bone) ---
@@ -58,7 +58,7 @@ void Renderer::Initialize()
         desc.ByteWidth = sizeof(BoneCB);
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        device_->CreateBuffer(&desc, nullptr, boneCB_.GetAddressOf());
+        device_->m_pDevice->CreateBuffer(&desc, nullptr, boneCB_.GetAddressOf());
     }
 
     // --- 定数バッファ作成 (Material) ---
@@ -68,7 +68,7 @@ void Renderer::Initialize()
         desc.ByteWidth = sizeof(MaterialCB);
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        device_->CreateBuffer(&desc, nullptr, materialCB_.GetAddressOf());
+        device_->m_pDevice->CreateBuffer(&desc, nullptr, materialCB_.GetAddressOf());
     }
 
     // --- ラスタライザステート (D2D対策) ---
@@ -78,7 +78,7 @@ void Renderer::Initialize()
         rsDesc.FillMode = D3D11_FILL_SOLID;
         rsDesc.CullMode = D3D11_CULL_BACK;
         rsDesc.DepthClipEnable = TRUE;
-        device_->CreateRasterizerState(&rsDesc, rasterizerState_.GetAddressOf());
+        device_->m_pDevice->CreateRasterizerState(&rsDesc, rasterizerState_.GetAddressOf());
     }
 
     // --- 深度ステンシルステート (D2D対策) ---
@@ -88,7 +88,7 @@ void Renderer::Initialize()
         dsDesc.DepthEnable = TRUE;
         dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
         dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-        device_->CreateDepthStencilState(&dsDesc, depthStencilState_.GetAddressOf());
+        device_->m_pDevice->CreateDepthStencilState(&dsDesc, depthStencilState_.GetAddressOf());
     }
 
     // --- サンプラ ---
@@ -101,22 +101,22 @@ void Renderer::Initialize()
         samp.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
         samp.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
         samp.MaxLOD = D3D11_FLOAT32_MAX;
-        device_->CreateSamplerState(&samp, samplerState_.GetAddressOf());
+        device_->m_pDevice->CreateSamplerState(&samp, samplerState_.GetAddressOf());
     }
 }
 
 void Renderer::Begin(const float clearColor[4])
 {
-    ID3D11RenderTargetView* rt = renderTargetView_.Get();
-    ID3D11DepthStencilView* ds = depthStencilView_.Get();
-    context_->OMSetRenderTargets(1, &rt, ds);
+    ID3D11RenderTargetView* rt = device_->m_pRenderTargetView.Get();
+    ID3D11DepthStencilView* ds = device_->m_pDepthStencilView.Get();
+    device_->m_pImmediateContext->OMSetRenderTargets(1, &rt, ds);
 
-    if (rt) context_->ClearRenderTargetView(rt, clearColor);
-    if (ds) context_->ClearDepthStencilView(ds, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    if (rt) device_->m_pImmediateContext->ClearRenderTargetView(rt, clearColor);
+    if (ds) device_->m_pImmediateContext->ClearDepthStencilView(ds, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-    context_->RSSetState(rasterizerState_.Get());
-    context_->OMSetDepthStencilState(depthStencilState_.Get(), 0);
-    context_->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+    device_->m_pImmediateContext->RSSetState(rasterizerState_.Get());
+    device_->m_pImmediateContext->OMSetDepthStencilState(depthStencilState_.Get(), 0);
+    device_->m_pImmediateContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 
     D3D11_VIEWPORT vp;
     ZeroMemory(&vp, sizeof(vp));
@@ -126,9 +126,9 @@ void Renderer::Begin(const float clearColor[4])
     vp.Height = 720.0f;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
-    context_->RSSetViewports(1, &vp);
+    device_->m_pImmediateContext->RSSetViewports(1, &vp);
 
-    context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    device_->m_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     if (camera_)
     {
@@ -141,18 +141,18 @@ void Renderer::Begin(const float clearColor[4])
         cb.pad0 = 0.0f;
         cb.pad1 = 0.0f;
 
-        context_->UpdateSubresource(perFrameCB_.Get(), 0, nullptr, &cb, 0, 0);
+        device_->m_pImmediateContext->UpdateSubresource(perFrameCB_.Get(), 0, nullptr, &cb, 0, 0);
 
         ID3D11Buffer* p = perFrameCB_.Get();
-        context_->VSSetConstantBuffers(1, 1, &p);
-        context_->PSSetConstantBuffers(1, 1, &p);
+        device_->m_pImmediateContext->VSSetConstantBuffers(1, 1, &p);
+        device_->m_pImmediateContext->PSSetConstantBuffers(1, 1, &p);
     }
 
     ID3D11SamplerState* samp = samplerState_.Get();
-    context_->PSSetSamplers(0, 1, &samp);
+    device_->m_pImmediateContext->PSSetSamplers(0, 1, &samp);
 
     if (shader3D_)
-        shader3D_->Bind(context_.Get());
+        shader3D_->Bind(device_->m_pImmediateContext.Get());
 }
 void Renderer::SetCamera(const Camera* camera)
 {
@@ -181,7 +181,6 @@ void Renderer::DrawModel(const ModelBase& model, Transform& transform)
         TraverseNode(model, model.rootNode.get(), world);
     }
 }
-
 
 
 void Renderer::TraverseNode(const ModelBase& model, const Node* node, const XMMATRIX& parentMatrix)
@@ -226,24 +225,24 @@ void Renderer::DrawMesh(const ModelBase& model, const Mesh& mesh, const XMMATRIX
         mat.useTexture = (m.baseColorTexture != nullptr) ? 1 : 0;
     }
 
-    context_->UpdateSubresource(materialCB_.Get(), 0, nullptr, &mat, 0, 0);
+    device_->m_pImmediateContext->UpdateSubresource(materialCB_.Get(), 0, nullptr, &mat, 0, 0);
     ID3D11Buffer* mcb = materialCB_.Get();
-    context_->PSSetConstantBuffers(3, 1, &mcb);
+    device_->m_pImmediateContext->PSSetConstantBuffers(3, 1, &mcb);
 
     // テクスチャ
     if (mat.useTexture)
     {
         const Material& m = model.materials[mesh.materialIndex];
         ID3D11ShaderResourceView* srv = m.baseColorTexture->GetSRV();
-        context_->PSSetShaderResources(0, 1, &srv);
+        device_->m_pImmediateContext->PSSetShaderResources(0, 1, &srv);
     }
 
     // PerObject
     PerObjectCB obj{};
     obj.world = XMMatrixTranspose(world);
-    context_->UpdateSubresource(perObjectCB_.Get(), 0, nullptr, &obj, 0, 0);
+    device_->m_pImmediateContext->UpdateSubresource(perObjectCB_.Get(), 0, nullptr, &obj, 0, 0);
     ID3D11Buffer* pcb = perObjectCB_.Get();
-    context_->VSSetConstantBuffers(0, 1, &pcb);
+    device_->m_pImmediateContext->VSSetConstantBuffers(0, 1, &pcb);
 
     UINT stride = mesh.GetStride();
     UINT offset = 0;
@@ -256,11 +255,11 @@ void Renderer::DrawMesh(const ModelBase& model, const Mesh& mesh, const XMMATRIX
         return;
     }
 
-    context_->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-    context_->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-    context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    device_->m_pImmediateContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+    device_->m_pImmediateContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+    device_->m_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    context_->DrawIndexed(mesh.GetIndexCount(), 0, 0);
+    device_->m_pImmediateContext->DrawIndexed(mesh.GetIndexCount(), 0, 0);
 }
 
 void Renderer::TraverseNodeSkinned(const SkinnedModel& model, const Node* node, const XMMATRIX& parentMatrix)
@@ -293,16 +292,16 @@ void Renderer::DrawMeshSkinned(
     for (size_t i = 0; i < count; ++i)
         boneData.bones[i] = XMMatrixTranspose(finalMatrices[i]);
 
-    context_->UpdateSubresource(boneCB_.Get(), 0, nullptr, &boneData, 0, 0);
+    device_->m_pImmediateContext->UpdateSubresource(boneCB_.Get(), 0, nullptr, &boneData, 0, 0);
     ID3D11Buffer* boneCB = boneCB_.Get();
-    context_->VSSetConstantBuffers(2, 1, &boneCB);
+    device_->m_pImmediateContext->VSSetConstantBuffers(2, 1, &boneCB);
 
     // PerObject
     PerObjectCB obj{};
     obj.world = XMMatrixTranspose(world);
-    context_->UpdateSubresource(perObjectCB_.Get(), 0, nullptr, &obj, 0, 0);
+    device_->m_pImmediateContext->UpdateSubresource(perObjectCB_.Get(), 0, nullptr, &obj, 0, 0);
     ID3D11Buffer* pcb = perObjectCB_.Get();
-    context_->VSSetConstantBuffers(0, 1, &pcb);
+    device_->m_pImmediateContext->VSSetConstantBuffers(0, 1, &pcb);
 
     UINT stride = mesh.GetStride();
     UINT offset = 0;
@@ -315,11 +314,11 @@ void Renderer::DrawMeshSkinned(
         return;
     }
 
-    context_->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-    context_->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-    context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    device_->m_pImmediateContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+    device_->m_pImmediateContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+    device_->m_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    context_->DrawIndexed(mesh.GetIndexCount(), 0, 0);
+    device_->m_pImmediateContext->DrawIndexed(mesh.GetIndexCount(), 0, 0);
 }
 
 
