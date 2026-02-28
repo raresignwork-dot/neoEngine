@@ -1,0 +1,432 @@
+良い問いです。
+ここはエンジン設計の核心です。
+
+結論から言います。
+
+> **「共有したい」ことと「1つの巨大Contextに全部入れる」ことは同義ではありません。**
+
+SceneContext が肥大化するのは自然ですが、
+それは「不可避」ではありません。
+
+---
+
+# なぜ SceneContext は肥大化するのか？
+
+典型的な流れ：
+
+最初は
+
+```cpp
+device
+context
+camera
+deltaTime
+```
+
+そのうち
+
+```
+input
+audio
+assetManager
+physics
+ui
+network
+debug
+...
+```
+
+になります。
+
+理由は単純です。
+
+> 「Sceneで使うから」
+
+しかしこれは設計的には危険です。
+
+---
+
+# 問題の本質
+
+SceneContext は今こうなっています：
+
+> 共有データの束
+
+しかし設計的に重要なのは：
+
+* 何を共有するのか
+* 何を所有するのか
+* 何がサービスなのか
+* 何がフレーム情報なのか
+
+を分離することです。
+
+---
+
+# 改善パターン①：役割で分割する
+
+SceneContext を分解します。
+
+例：
+
+```cpp
+struct FrameContext {
+    float deltaTime;
+};
+
+struct GraphicsContext {
+    Renderer* renderer;
+    ID3D11Device* device;
+};
+
+struct GameServices {
+    InputSystem* input;
+    AudioSystem* audio;
+};
+```
+
+Scene::Update は：
+
+```cpp
+void Update(FrameContext& frame, GameServices& services);
+```
+
+Scene::Draw は：
+
+```cpp
+void Draw(GraphicsContext& graphics);
+```
+
+これで：
+
+* フレーム情報
+* グラフィックス
+* サービス
+
+が分離されます。
+
+肥大化しません。
+
+---
+
+# 改善パターン②：必要なものだけ渡す
+
+より強い設計。
+
+Scene のコンストラクタで必要なものだけ渡す。
+
+```cpp
+Scene(Renderer& renderer, Camera& camera);
+```
+
+Update では：
+
+```cpp
+void Update(float deltaTime);
+```
+
+これが最も明確。
+
+依存が明示されます。
+
+---
+
+# 改善パターン③：サービスロケータ方式
+
+SceneContext を「サービス取得窓口」にする。
+
+```cpp
+template<typename T>
+T* Get();
+```
+
+ただしこれは：
+
+* 依存が見えなくなる
+* テストしにくい
+
+という弱点があります。
+
+---
+
+# 「共有は仕方ない」は半分正しい
+
+共有は必要です。
+
+でも重要なのは：
+
+> 共有 ≠ 1つの巨大構造体
+
+です。
+
+共有してもいい。
+
+でも意味単位で分ける。
+
+---
+
+# 今のあなたに最適な設計
+
+あなたは今：
+
+* 小規模エンジン
+* 自作基盤
+* 学習目的
+
+なので、
+
+### 現実的解：
+
+1. SceneContext を非所有ビューにする
+2. 3〜4種類の小さなContextに分ける
+3. UpdateとDrawで渡すContextを変える
+
+これだけで設計レベルが一段上がります。
+
+---
+
+# 重要な観点
+
+Sceneが使うものは大きく3種類：
+
+1. フレームごとに変わるもの（deltaTime）
+2. 永続サービス（renderer, input）
+3. ゲーム状態（score, playerなど）
+
+これを混ぜないこと。
+
+---
+
+# もう一段深い話
+
+プロのエンジンでは：
+
+* サービス層
+* システム層
+* ワールド層
+* レンダー層
+
+が分離されています。
+
+たとえば Unreal Engine では：
+
+* UWorld
+* GameInstance
+* Subsystem
+
+に分かれています。
+
+全部1つではありません。
+
+---
+
+# SceneContextをどうすべきか？
+
+今すぐ全部作り直す必要はありません。
+
+ただ：
+
+* 何を入れると危険か
+* どこで分割すべきか
+
+を意識し始めるだけで十分です。
+
+---
+
+# 設計判断の基準
+
+新しいメンバをSceneContextに追加する前に：
+
+1. これは全Sceneが必ず必要か？
+2. フレーム限定情報か？
+3. サービスか？
+4. 所有者は誰か？
+
+これを答えられれば肥大化は制御できます。
+
+---
+
+# 最後に
+
+SceneContext肥大は「初心者の問題」ではありません。
+
+エンジン開発者が必ず通る道です。
+
+あなたは今そこに到達しています。
+
+これは良い兆候です。
+
+---
+
+一つ聞きます。
+
+今 SceneContext に入れるか迷っているものは何ですか？
+
+具体例があると、より設計レベルで整理できます。
+非常に良い視点です。
+設計力は「語彙力」とほぼ同義です。
+
+特に C++ / DirectX 系のリアルタイムアプリやゲーム基盤では、
+**責務を正確に命名できるかどうか**が構造の健全性に直結します。
+
+以下に、設計時によく使われる英単語を **意味カテゴリ別に整理**します。
+
+---
+
+# ① 所有・ライフタイム系（Ownership / Lifetime）
+
+| 単語        | 意味     | 設計上のニュアンス      |
+| --------- | ------ | -------------- |
+| Owner     | 所有者    | リソースの破棄責任を持つ   |
+| Ownership | 所有権    | unique_ptr的概念  |
+| Lifetime  | 生存期間   | 生成〜破棄の範囲       |
+| Scope     | スコープ   | 有効範囲           |
+| Instance  | 実体     | クラスの具体化        |
+| Handle    | 取っ手    | 実体への軽量参照       |
+| Resource  | 資源     | GPU/メモリ等       |
+| Asset     | アセット   | 読み込み専用資産       |
+| Manager   | 管理者    | 複数Resourceを束ねる |
+| Pool      | プール    | 再利用前提の管理       |
+| Factory   | 生成専用   | newの隠蔽         |
+| Allocator | メモリ管理者 | カスタムメモリ戦略      |
+
+---
+
+# ② 共有・参照系（Sharing / Access）
+
+| 単語        | 意味  | 設計上のニュアンス   |
+| --------- | --- | ----------- |
+| Shared    | 共有  | shared_ptr的 |
+| Reference | 参照  | 所有しない       |
+| Weak      | 弱参照 | 所有せず監視      |
+| Context   | 文脈  | 共有環境情報      |
+| Registry  | 登録所 | オブジェクト一覧    |
+| Container | 入れ物 | 所有を持つことが多い  |
+| View      | 表示用 | 非所有参照       |
+| Proxy     | 代理  | 実体の代替       |
+| Bridge    | 橋渡し | レイヤー接続      |
+
+---
+
+# ③ サービス系（Service / System）
+
+| 単語          | 意味     | 設計上のニュアンス       |
+| ----------- | ------ | --------------- |
+| Service     | 横断機能   | ロジック提供側         |
+| System      | 大きな機構  | Updateを持つこと多い   |
+| Subsystem   | 部分システム | GraphicsSystem等 |
+| Module      | モジュール  | 機能単位            |
+| Provider    | 提供者    | 依存注入向き          |
+| Controller  | 制御役    | 入力や状態遷移         |
+| Coordinator | 調停者    | 複数連携            |
+| Dispatcher  | 振り分け   | イベント処理          |
+| Scheduler   | 実行管理   | タスク順制御          |
+
+---
+
+# ④ フレーム・実行状態系（Frame / Runtime）
+
+| 単語           | 意味        | 設計上のニュアンス |
+| ------------ | --------- | --------- |
+| Frame        | 1フレーム単位   |           |
+| FrameContext | フレーム中だけ有効 |           |
+| FrameData    | 一時データ     |           |
+| TimeStep     | Δt        |           |
+| DeltaTime    | 経過時間      |           |
+| Tick         | 更新単位      |           |
+| Update       | 状態更新      |           |
+| Render       | 描画処理      |           |
+| Present      | 表示確定      |           |
+| Pipeline     | 処理経路      |           |
+| Stage        | 処理段階      |           |
+
+---
+
+# ⑤ データ vs 振る舞い
+
+| 単語         | 意味    | 傾向 |
+| ---------- | ----- | -- |
+| Data       | 純データ  |    |
+| State      | 状態    |    |
+| Config     | 設定    |    |
+| Descriptor | 設定記述  |    |
+| Parameter  | 引数群   |    |
+| Model      | 論理構造  |    |
+| Component  | 部品    |    |
+| Entity     | 実体識別子 |    |
+| Behavior   | 振る舞い  |    |
+| Logic      | ロジック  |    |
+
+---
+
+# ⑥ アーキテクチャ構造語
+
+| 単語             | 意味   |
+| -------------- | ---- |
+| Layer          | レイヤー |
+| Abstraction    | 抽象   |
+| Interface      | 契約   |
+| Implementation | 実装   |
+| Dependency     | 依存   |
+| Injection      | 注入   |
+| Composition    | 合成   |
+| Aggregation    | 集約   |
+| Orchestrator   | 統括   |
+
+---
+
+# あなたのケースに当てはめると
+
+例えば：
+
+* `SceneContext`
+  → 実は `GraphicsContext` + `FrameContext` + `ServiceLocator` が混ざっている可能性
+
+* `App`
+  → Orchestrator / Bootstrapper になっている可能性
+
+* `Renderer`
+  → Service なのか Owner なのか曖昧になりやすい
+
+---
+
+# 設計時の自問テンプレート
+
+クラスを作る前に：
+
+1. これは所有者か？
+2. これはサービスか？
+3. これはフレーム単位か？
+4. これは永続データか？
+5. 破棄責任は誰か？
+6. 他から参照されるか？
+
+これを言語化できれば設計は安定します。
+
+---
+
+# 上級者がやっていること
+
+実は彼らはまず：
+
+> 名付けを決めてから構造を決める
+
+のではなく
+
+> 責務を文章で定義してから命名する
+
+です。
+
+---
+
+もしよければ教えてください：
+
+* あなたの `SceneContext` は現在何を持っていますか？
+
+  * Device?
+  * SwapChain?
+  * Renderer?
+  * Time?
+  * Input?
+
+そこから設計を具体的に整理していきましょう。

@@ -1,0 +1,11 @@
+[33mcommit bf6ae10d201374d02392cf61c7618e2bd350057d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mGraphicDevice[m[33m, [m[1;32mmaster[m[33m)[m
+Author: kimur <kimur@DESKTOP-V7FJJOC>
+Date:   Thu Feb 26 15:13:35 2026 +0900
+
+    プロジェクトファイルを追加。
+
+[33mcommit e24b6dc309dc14345e46a0c55aa338ffe0c6f196[m
+Author: kimur <kimur@DESKTOP-V7FJJOC>
+Date:   Thu Feb 26 15:13:23 2026 +0900
+
+    .gitattributes および .gitignore を追加。
