@@ -147,6 +147,7 @@ kernel32.lib</AdditionalDependencies>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Core\App.cpp" />
+    <ClCompile Include="Engine\Graphics\GraphicDevice.cpp" />
     <ClCompile Include="Engine\Graphics\Mesh.cpp" />
     <ClCompile Include="Engine\Graphics\Model.cpp" />
     <ClCompile Include="Engine\Graphics\Renderer.cpp" />
@@ -203,6 +204,7 @@ kernel32.lib</AdditionalDependencies>
   <ItemGroup>
     <ClInclude Include="Engine\Animation\Animation.h" />
     <ClInclude Include="Engine\Core\App.h" />
+    <ClInclude Include="Engine\Graphics\GraphicDevice.h" />
     <ClInclude Include="Engine\Graphics\Material.h" />
     <ClInclude Include="Engine\Graphics\Mesh.h" />
     <ClInclude Include="Engine\Graphics\Model.h" />

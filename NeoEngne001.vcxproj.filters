@@ -72,15 +72,21 @@
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Graphics\GraphicDevice.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="base.hlsl" />
     <FxCompile Include="PS.hlsl" />
     <FxCompile Include="unlit.hlsl" />
     <FxCompile Include="VS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="NeoEngne001.slnx" />
+    <None Include="Assets\Model\Player\TestPlayer.bin">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="Assets\Model\Player\TestPlayer.gltf" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Core\App.h">
@@ -152,6 +158,9 @@
     <ClInclude Include="Engine\Shaders\ShaderManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Graphics\GraphicDevice.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Guide\audio.txt">
@@ -175,5 +184,14 @@
     <Text Include="Guide\CodingGuide.txt">
       <Filter>Guid</Filter>
     </Text>
+    <Text Include="Guide\analize.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="base.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Model\Player\Texture\Untitled.png">
+      <Filter>リソース ファイル</Filter>
+    </Image>
   </ItemGroup>
 </Project>

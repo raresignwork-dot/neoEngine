@@ -40,6 +40,7 @@ private:
     ComPtr<ID2D1Bitmap1> m_pD2DTargetBitmap;
     ComPtr<IDWriteFactory> m_pDWriteFactory;
 
+
     std::unique_ptr<SceneManager> m_pSceneManager;
     std::unique_ptr<ShaderManager> shaderManager;
 
