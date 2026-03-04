@@ -1,15 +1,6 @@
 ﻿#include "Scene.h"
 
 
-Scene::Scene()
-{
-    
-}
-
-Scene::~Scene()
-{
-    //Unload();
-}
 
 void Scene::Update(SceneContext& ctx)
 {

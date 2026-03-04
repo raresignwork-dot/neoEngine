@@ -42,20 +42,36 @@ bool OpenningScene::Load(SceneContext& ctx)
     auto obj = std::make_unique<GameObject>();
 
     // モデル読み込み
-    GltfLoader loader(ctx.device.Get());
-    auto model = loader.Load("Assets/Model/Player/TestPlayer.gltf");
+    
 
-    if (!model)
+    try
     {
-        printf("Model load failed\n");
-        return false;
+        GltfLoader loader(ctx.grapDevice->m_pDevice.Get());
+
+        auto model = loader.Load("Assets/Model/Player/TestPlayer.gltf");
+
+        if (!model)
+        {
+            printf("Model load failed\n");
+            return false;
+        }
+
+
+        // デバッグ出力
+        model->DebugPrint();
+
+        // GameObject にセット
+        obj->model = model;
+
+    }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
     }
 
-    // デバッグ出力
-    model->DebugPrint();
 
-    // GameObject にセット
-    obj->model = model;
+
+
 
     // ★ オブジェクトの位置を設定
     obj->transform.position = { 0, 0, 0 };
@@ -89,16 +105,16 @@ void OpenningScene::Draw(SceneContext& ctx)
 void OpenningScene::Draw2D(SceneContext& ctx)
 {
     ComPtr<ID2D1SolidColorBrush> brush;
-    ctx.d2dContext->CreateSolidColorBrush(
+    ctx.grapDevice->m_pD2DTarget->CreateSolidColorBrush(
         D2D1::ColorF(D2D1::ColorF::Yellow),
         brush.GetAddressOf());
 
-    ctx.d2dContext->FillRectangle(
+    ctx.grapDevice->m_pD2DTarget->FillRectangle(
         D2D1::RectF(10, 10, 110, 110),
         brush.Get());
 
     ComPtr<IDWriteTextFormat> textFormat;
-    ctx.dwriteFactory->CreateTextFormat(
+    ctx.grapDevice->m_pDWriteFactory->CreateTextFormat(
         L"Consolas",
         nullptr,
         DWRITE_FONT_WEIGHT_NORMAL,
@@ -109,13 +125,13 @@ void OpenningScene::Draw2D(SceneContext& ctx)
         textFormat.GetAddressOf());
 
     ComPtr<ID2D1SolidColorBrush> whiteBrush;
-    ctx.d2dContext->CreateSolidColorBrush(
+    ctx.grapDevice->m_pD2DTarget->CreateSolidColorBrush(
         D2D1::ColorF(D2D1::ColorF::White),
         whiteBrush.GetAddressOf());
 
     const wchar_t* msg = L"Hello Direct2D!";
 
-    ctx.d2dContext->DrawText(
+    ctx.grapDevice->m_pD2DTarget->DrawText(
         msg,
         (UINT32)wcslen(msg),
         textFormat.Get(),

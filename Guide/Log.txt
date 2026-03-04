@@ -1,0 +1,138 @@
+9:27 でビルドが開始されました...
+1>------ ビルド開始: プロジェクト: NeoEngne001, 構成: Debug x64 ------
+1>  App.cpp
+1>  GraphicDevice.cpp
+1>  Mesh.cpp
+1>  Model.cpp
+1>  Renderer.cpp
+1>  GltfLoader.cpp
+1>  TextureLoader.cpp
+1>  Component.cpp
+1>  GameObject.cpp
+1>  Transform.cpp
+1>  Audio.cpp
+1>  Camera.cpp
+1>  OpenningScene.cpp
+1>  Scene.cpp
+1>  SceneManager.cpp
+1>  TriangleScene.cpp
+1>  Shader.cpp
+1>  ShaderManager.cpp
+1>  main.cpp
+1>  コードを生成中...
+1>     ライブラリ D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.lib とオブジェクト D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.exp を作成中
+1>  NeoEngne001.vcxproj -> D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.exe
+========== ビルド: 成功 1、失敗 0、最新の状態 0、スキップ 0 ==========
+=========== ビルド は 9:28 で完了し、51.171 秒 掛かりました ==========
+
+
+'NeoEngne001.exe' (Win32): 'D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.exe' が読み込まれました。シンボルが読み込まれました。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ntdll.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\kernel32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\KernelBase.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\user32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\win32u.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\gdi32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\gdi32full.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\msvcp_win.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ucrtbase.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ole32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\rpcrt4.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\d3d11.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\D3DCompiler_47.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\msvcp140d.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\combase.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\msvcrt.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\d2d1.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DWrite.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\vcruntime140d.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\vcruntime140_1d.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ucrtbased.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\cryptsp.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\dxgi.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\imm32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\bcryptprimitives.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\uxtheme.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\msctf.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\oleaut32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\sechost.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\bcrypt.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\kernel.appcore.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\TextInputFramework.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\CoreUIComponents.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\CoreMessaging.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ws2_32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\SHCore.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ntmarta.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\advapi32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\WinTypes.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DXGIDebug.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ResourcePolicyClient.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\ResourcePolicyClient.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DriverStore\FileRepository\nvpcd.inf_amd64_f0af978dff84694e\nvldumdx.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\version.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\crypt32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\wintrust.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\msasn1.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\imagehlp.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\rsaenh.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\cryptbase.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DriverStore\FileRepository\nvpcd.inf_amd64_f0af978dff84694e\nvwgf2umx.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\winmm.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+スレッド 17788 はコード 0 (0x0) で終了しました。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\cryptnet.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DriverStore\FileRepository\nvpcd.inf_amd64_f0af978dff84694e\NvCamera\NvCameraWhitelisting64.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\shell32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\shlwapi.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\windows.storage.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\wldp.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\shlwapi.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\wldp.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\windows.storage.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\shell32.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DriverStore\FileRepository\nvpcd.inf_amd64_f0af978dff84694e\NvCamera\NvCameraWhitelisting64.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\shell32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\windows.storage.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\wldp.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\shlwapi.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\d3d11_3SDKLayers.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DXCore.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\cfgmgr32.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+DXGI WARNING: IDXGIFactory::CreateSwapChain: Blt-model swap effects (DXGI_SWAP_EFFECT_DISCARD and DXGI_SWAP_EFFECT_SEQUENTIAL) are legacy swap effects that are predominantly superceded by their flip-model counterparts (DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL and DXGI_SWAP_EFFECT_FLIP_DISCARD). Please consider updating your application to leverage flip-model swap effects to benefit from modern presentation enhancements. More information is available at http://aka.ms/dxgiflipmodel. [ MISCELLANEOUS WARNING #294: ]
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\dwmapi.dll' が読み込まれました。含める/除外するの設定でシンボルの読み込みが無効になっています。
+0x00007FFDFB175369 で例外がスローされました (NeoEngne001.exe 内): Microsoft C++ の例外: DeadlyImportError (メモリの場所 0x000000D31EF0CBA0)。
+0x00007FFDFB175369 で例外がスローされました (NeoEngne001.exe 内): Microsoft C++ の例外: DeadlyImportError (メモリの場所 0x000000D31EF0C178)。
+0x00007FFDFB175369 で例外がスローされました (NeoEngne001.exe 内): Microsoft C++ の例外: DeadlyImportError (メモリの場所 0x000000D31EF0CBA0)。
+0x00007FFDFB175369 で例外がスローされました (NeoEngne001.exe 内): Microsoft C++ の例外: DeadlyImportError (メモリの場所 0x000000D31EF0C178)。
+SceneManager::Update: next scene Load() failed
+Shader::Bind: binding shaders and input layout
+
+Shader::Bind: binding shaders and input layout
+スレッド 9180 はコード 0 (0x0) で終了しました。
+スレッド 16768 はコード 0 (0x0) で終了しました。
+スレッド 17288 はコード 0 (0x0) で終了しました。
+スレッド 15592 はコード 0 (0x0) で終了しました。
+スレッド 1928 はコード 0 (0x0) で終了しました。
+スレッド 5900 はコード 0 (0x0) で終了しました。
+スレッド 16412 はコード 0 (0x0) で終了しました。
+スレッド 15532 はコード 0 (0x0) で終了しました。
+スレッド 8144 はコード 0 (0x0) で終了しました。
+スレッド 2396 はコード 0 (0x0) で終了しました。
+スレッド 'NVFBCAsyncThread' (13440) はコード 0 (0x0) で終了しました。
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\winmm.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DriverStore\FileRepository\nvpcd.inf_amd64_f0af978dff84694e\nvwgf2umx.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\version.dll' がアンロードされました
+'NeoEngne001.exe' (Win32): 'C:\Windows\System32\DriverStore\FileRepository\nvpcd.inf_amd64_f0af978dff84694e\nvldumdx.dll' がアンロードされました
+スレッド 9164 はコード 0 (0x0) で終了しました。
+スレッド 18140 はコード 0 (0x0) で終了しました。
+スレッド 9940 はコード 0 (0x0) で終了しました。
+スレッド 14500 はコード 0 (0x0) で終了しました。
+スレッド 19708 はコード 0 (0x0) で終了しました。
+スレッド 14680 はコード 0 (0x0) で終了しました。
+プログラム '[15912] NeoEngne001.exe' はコード 0 (0x0) で終了しました。
+
+
+GltfLoader.cpp
+TextureLoader.cpp
+Model.cpp
+SceneManager.cpp

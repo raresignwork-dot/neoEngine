@@ -29,7 +29,7 @@ void Renderer::Initialize()
 {
     shader3D_ = std::make_unique<Shader>();
     // パスは環境に合わせて調整してください
-    shader3D_->Load(device_->m_pDevice.Get(), L"Assets/Shaders/base.hlsl", "VSMain", "PSMain");
+    shader3D_->Load(device_->m_pDevice.Get(), L"base.hlsl", "VSMain", "PSMain");
 
     // --- 定数バッファ作成 (PerObject) ---
     {

@@ -31,12 +31,3 @@ int WINAPI WinMain(
     return 0;
 }
 
-// ウィンドウプロシージャの実体
-LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    switch (message) {
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-    }
-    return DefWindowProc(hWnd, message, wParam, lParam);
-}
