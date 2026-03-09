@@ -203,7 +203,10 @@ kernel32.lib</AdditionalDependencies>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Model\Player\TestPlayer.bin" />
-    <None Include="Assets\Model\Player\TestPlayer.gltf" />
+    <CopyFileToFolders Include="Assets\Model\Player\TestPlayer.gltf">
+      <FileType>Document</FileType>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </CopyFileToFolders>
     <None Include="NeoEngne001.slnx" />
   </ItemGroup>
   <ItemGroup>
@@ -243,7 +246,9 @@ kernel32.lib</AdditionalDependencies>
     <Text Include="Guide\SetUp.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Assets\Model\Player\Texture\Untitled.png" />
+    <CopyFileToFolders Include="Assets\Model\Player\Texture\Untitled.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

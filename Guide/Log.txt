@@ -1,4 +1,4 @@
-9:27 でビルドが開始されました...
+17:35 でビルドが開始されました...
 1>------ ビルド開始: プロジェクト: NeoEngne001, 構成: Debug x64 ------
 1>  App.cpp
 1>  GraphicDevice.cpp
@@ -21,9 +21,13 @@
 1>  main.cpp
 1>  コードを生成中...
 1>     ライブラリ D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.lib とオブジェクト D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.exp を作成中
-1>  NeoEngne001.vcxproj -> D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.exe
-========== ビルド: 成功 1、失敗 0、最新の状態 0、スキップ 0 ==========
-=========== ビルド は 9:28 で完了し、51.171 秒 掛かりました ==========
+1>GltfLoader.obj : error LNK2001: 外部シンボル "public: virtual void __cdecl ModelBase::DebugPrint(void)" (?DebugPrint@ModelBase@@UEAAXXZ) は未解決です
+1>GltfLoader.obj : error LNK2001: 外部シンボル "public: virtual void __cdecl SkinnedModel::Draw(struct DirectX::XMMATRIX)" (?Draw@SkinnedModel@@UEAAXUXMMATRIX@DirectX@@@Z) は未解決です
+1>GltfLoader.obj : error LNK2001: 外部シンボル "public: virtual void __cdecl SkinnedModel::DebugPrint(void)" (?DebugPrint@SkinnedModel@@UEAAXXZ) は未解決です
+1>GameObject.obj : error LNK2019: 未解決の外部シンボル "public: void __cdecl SkinnedModel::UpdateAnimation(float)" (?UpdateAnimation@SkinnedModel@@QEAAXM@Z) が関数 "public: void __cdecl GameObject::Update(float)" (?Update@GameObject@@QEAAXM@Z) で参照されました
+1>D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.exe : fatal error LNK1120: 4 件の未解決の外部参照
+========== ビルド: 成功 0、失敗 1、最新の状態 0、スキップ 0 ==========
+=========== ビルド は 17:36 で完了し、48.048 秒 掛かりました ==========
 
 
 'NeoEngne001.exe' (Win32): 'D:\Develop\c++\gameProject\NeoEngne001\x64\Debug\NeoEngne001.exe' が読み込まれました。シンボルが読み込まれました。
@@ -108,6 +112,7 @@ SceneManager::Update: next scene Load() failed
 Shader::Bind: binding shaders and input layout
 
 Shader::Bind: binding shaders and input layout
+Shader::Bind: binding shaders and input layout
 スレッド 9180 はコード 0 (0x0) で終了しました。
 スレッド 16768 はコード 0 (0x0) で終了しました。
 スレッド 17288 はコード 0 (0x0) で終了しました。
@@ -132,7 +137,23 @@ Shader::Bind: binding shaders and input layout
 プログラム '[15912] NeoEngne001.exe' はコード 0 (0x0) で終了しました。
 
 
+
 GltfLoader.cpp
 TextureLoader.cpp
 Model.cpp
 SceneManager.cpp
+
+次を見せてください。
+
+1️⃣ OpenningScene::Load()
+2️⃣ TriangleScene::Load()
+3️⃣ Model::Load()
+4️⃣ GltfLoader
+
+
+GltfLoader.cpp
+TextureLoader.cpp
+Model.cpp
+SceneManager.cpp
+OpenningScene.cpp
+TriangleScene.cpp

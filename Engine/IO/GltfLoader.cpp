@@ -26,8 +26,12 @@ std::shared_ptr<ModelBase> GltfLoader::Load(const std::string& path)
         aiProcess_LimitBoneWeights
     );
 
-    if (!scene || !scene->mRootNode)
+
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    {
+        printf("Assimp error: %s\n", importer.GetErrorString());
         return nullptr;
+    }
 
     bool hasBones = false;
     for (unsigned i = 0; i < scene->mNumMeshes; i++)
@@ -60,6 +64,7 @@ std::shared_ptr<ModelBase> GltfLoader::Load(const std::string& path)
     {
         aiMaterial* aimat = scene->mMaterials[i];
         Material mat = ProcessMaterial(aimat);
+
         model->materials.push_back(mat);
     }
 
