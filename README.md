@@ -25,3 +25,10 @@ The author does not claim copyright over this early-stage project.
 You are free to use it for any purpose.
 
 However, please note that the author takes no responsibility for any issues or damages resulting from the use of this project.
+
+## License
+
+This project is released under The Unlicense.
+
+Note that third-party libraries used by this project may have their own licenses.
+Please check the license terms of those libraries when redistributing or using them.
