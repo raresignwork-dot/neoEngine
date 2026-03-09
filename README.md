@@ -30,5 +30,10 @@ However, please note that the author takes no responsibility for any issues or d
 
 This project is released under The Unlicense.
 
-Note that third-party libraries used by this project may have their own licenses.
-Please check the license terms of those libraries when redistributing or using them.
+Third-party libraries used in this project include:
+
+- Assimp
+- DirectX related libraries (Direct3D11, Direct2D, DirectWrite, DXGI)
+
+Each library is distributed under its own license.  
+Please refer to their respective documentation for details.
